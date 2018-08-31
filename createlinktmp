@@ -1,0 +1,50 @@
+#!/bin/bash -x
+
+if [ -z "${PAM_USER}" ]; then
+	echo \"'$PAM_USER'\" not set
+fi
+
+TMP_ROOT=/tmp
+TMP_HOME=homes
+TMP_FOLDER=tmp
+HOME=$(getent passwd ${PAM_USER} | cut -d: -f6)
+
+if [ "$PAM_TYPE" = "open_session" ]; then
+	#make sure ${TMP_ROOT}/${TMP_HOME} exists
+	if [ ! -d "${TMP_ROOT}/${TMP_HOME}" ]; then
+		mkdir -p ${TMP_ROOT}/${TMP_HOME}
+	fi
+	#touch services file and append service if not found
+	if [ ! ff "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services" ];then
+		touch "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services"
+		#create new tmp folder in $TMP_ROOT and chown
+		TEMP_DIR=$(mktemp -d ${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.${TMP_FOLDER}.XXXXXX)
+		chown ${PAM_USER}:${PAM_USER} ${TEMP_DIR}
+
+		#relink tmp folder in $HOME
+		unlink ${HOME}/${TMP_FOLDER}
+		ln -sf ${TEMP_DIR} ${HOME}/${TMP_FOLDER}
+		chown ${PAM_USER}:${PAM_USER} ${HOME}/${TMP_FOLDER}
+
+	fi
+	if ! grep -q "${PAM_SERVICE}" "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services"; then
+		echo ${PAM_SERVICE} >> "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services"
+	fi
+
+	echo "\"open_session\" successful for \"$PAM_USER\" with \"$TEMP_DIR\" from \"$PAM_SERVICE\""
+	exit 0
+
+elif [ "$PAM_TYPE" = "close_session" ]; then
+	#remove current_service
+	sed -i "/${PAM_SERVICE}/d" "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services"  
+	#if services is empty, then remove old tmp folders
+	if [ "0" -eq $(wc -l < "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services") ]; then
+		find ${TMP_ROOT}/${TMP_HOME} -maxdepth 1 -type d -iname ${PAM_USER}.${TMP_FOLDER}.* -delete
+		rm "${TMP_ROOT}/${TMP_HOME}/${PAM_USER}.services"
+		echo removing all files for \"$PAM_USER\"
+	fi
+
+	echo "\"close_session\" successful for \"$PAM_USER\" from \"$PAM_SERVICE\"" 
+	exit 0 
+fi
+

@@ -1,0 +1,2 @@
+#!/bin/sh
+sshfs localhost:/ Remote -p 8022 -o IdentityFile=/home/lemo/.ssh/id_rsa -o auto_cache -o cache_timeout=115200 -o attr_timeout=115200 -o entry_timeout=1200 -o max_readahead=90000 -o large_read -o big_writes -o no_remote_lock -o ServerAliveInterval=15 -o reconnect -o ServerAliveCountMax=3 
