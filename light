@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# source ~/.config/light.script
+
+lights=(1 2 3 4)
+colored_lights=(2 3 4)
+
+red_light=3
+
+case $1 in
+"on")
+for l in ${lights[*]}; do
+    huepl on $l
+done
+echo on
+;;
+
+"off")
+for l in ${lights[*]}; do
+    huepl off $l
+done
+echo off
+;;
+
+"bri")
+for l in ${lights[*]}; do
+    huepl bri $l $2
+done
+echo bri
+;;
+
+"white")
+for l in ${colored_lights[*]}; do
+    huepl hs $l 0 0
+done
+echo white
+;;
+
+"red")
+for l in ${lights[*]};do
+    huepl off $l
+done
+huepl on $red_light
+huepl bri $red_light 0
+huepl hs $red_light 0 255
+echo red
+;;
+
+"ambient")
+for l in ${colored_lights[*]}; do
+    huepl on $l
+    huepl bri $l 127 
+    huepl hs $l 0 255
+done
+echo ambient
+;;
+esac

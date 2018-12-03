@@ -1,0 +1,4 @@
+maxColors=231
+hostId=$(hostname | shasum | cut -d" " -f1|awk '{print toupper($0)}'|bc)
+selColor=$(( $hostId % $maxColors ))
+echo $selColor

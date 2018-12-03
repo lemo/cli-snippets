@@ -1,0 +1,4 @@
+#!/bin/sh
+sudo systemctl start devolonetsvc
+/opt/devolo/dlancockpit/bin/dlancockpit-run.sh
+sudo systemctl stop devolonetsvc

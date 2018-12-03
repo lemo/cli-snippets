@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+file="$HOME/Private/maps/mac2hostname"
+commands=("sudo" "etherwake")
+
+for c in "${commands[@]}"; do
+	if [ ! $(command -v $c) ];then
+		echo "\"$c\" not installed!"
+		exit 1
+	fi
+done
+if [ "$1" = "" ]; then
+	echo "Error: Please specify a host!"
+	echo "Usage: $0 [host]"
+	exit 1
+fi
+
+host=$1
+readarray -t lines < ${file}
+declare -A table
+
+for line in "${lines[@]}"; do
+	tline=${line}
+	set -- $tline
+	value=$(echo $1 | sed 's/-/:/g')
+	if [[ ${value:0:1} != "#" ]]; then
+		key=$2
+		table[$key]=$value  ## Or simply ary[${line%%=*}]=${line#*=}
+	fi
+done
+for interface in /sys/class/net/*; do
+	sudo etherwake -i $(basename $interface) ${table[$host]} &>/dev/null
+	retval+="$? "
+done
+grep -q 0 <<< $retval && exit 0 || exit 1

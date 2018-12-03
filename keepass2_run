@@ -1,0 +1,7 @@
+#!/bin/bash
+
+{
+	secret-tool lookup keepass '' |keepass2 $HOME/Private/keys/Database.kdbx -pw-stdin &>/dev/null &
+	while ! wmctrl -l | grep -q " - KeePass"; do sleep 1; done
+	xdotool windowminimize --sync $(wmctrl -l | grep KeePass | awk '{print$1}')
+} &
